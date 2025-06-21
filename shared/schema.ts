@@ -1,0 +1,66 @@
+import { pgTable, text, serial, integer, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  category: text("category").notNull(),
+  vendor: text("vendor").notNull(),
+  description: text("description").notNull(),
+  date: text("date").notNull(),
+});
+
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  tags: text("tags").array().notNull().default([]),
+  type: text("type").notNull().default("text"), // text, checklist, link
+  completed: boolean("completed").default(false),
+});
+
+export const milestones = pgTable("milestones", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("pending"), // pending, in-progress, completed
+  expectedDate: text("expected_date"),
+  completedDate: text("completed_date"),
+  order: integer("order").notNull().default(0),
+});
+
+export const project = pgTable("project", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  location: text("location").notNull(),
+  totalBudget: decimal("total_budget", { precision: 10, scale: 2 }).notNull(),
+});
+
+export const insertExpenseSchema = createInsertSchema(expenses).omit({
+  id: true,
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+});
+
+export const insertMilestoneSchema = createInsertSchema(milestones).omit({
+  id: true,
+});
+
+export const insertProjectSchema = createInsertSchema(project).omit({
+  id: true,
+});
+
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type Expense = typeof expenses.$inferSelect;
+
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type Note = typeof notes.$inferSelect;
+
+export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
+export type Milestone = typeof milestones.$inferSelect;
+
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type Project = typeof project.$inferSelect;

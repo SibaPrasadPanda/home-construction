@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(217, 91%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Construction theme colors */
+  --construction: hsl(25, 95%, 53%);
+  --construction-foreground: hsl(0, 0%, 100%);
+  --construction-50: hsl(33, 100%, 96%);
+  --construction-100: hsl(34, 100%, 92%);
+  --construction-500: hsl(25, 95%, 53%);
+  --construction-600: hsl(20, 91%, 48%);
+  --construction-700: hsl(16, 84%, 44%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(217, 91%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  
+  /* Construction theme colors - dark mode */
+  --construction: hsl(25, 95%, 53%);
+  --construction-foreground: hsl(0, 0%, 100%);
+  --construction-50: hsl(25, 95%, 8%);
+  --construction-100: hsl(25, 95%, 12%);
+  --construction-500: hsl(25, 95%, 53%);
+  --construction-600: hsl(20, 91%, 48%);
+  --construction-700: hsl(16, 84%, 44%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .construction {
+    color: var(--construction);
+  }
+  
+  .bg-construction {
+    background-color: var(--construction);
+    color: var(--construction-foreground);
+  }
+  
+  .bg-construction-50 {
+    background-color: var(--construction-50);
+  }
+  
+  .bg-construction-100 {
+    background-color: var(--construction-100);
+  }
+  
+  .text-construction-600 {
+    color: var(--construction-600);
+  }
+  
+  .text-construction-700 {
+    color: var(--construction-700);
+  }
+  
+  .border-construction-500 {
+    border-color: var(--construction);
+  }
+}
