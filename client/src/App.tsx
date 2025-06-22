@@ -27,18 +27,17 @@ function Router() {
     );
   }
 
+  if (!isAuthenticated) {
+    return <Landing />;
+  }
+
+  // If user is authenticated, render the app
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/finance" component={FinanceTracker} />
-          <Route path="/notes" component={Notes} />
-          <Route path="/progress" component={ProgressTracker} />
-        </>
-      )}
+      <Route path="/" component={Dashboard} />
+      <Route path="/finance" component={FinanceTracker} />
+      <Route path="/notes" component={Notes} />
+      <Route path="/progress" component={ProgressTracker} />
       <Route component={NotFound} />
     </Switch>
   );

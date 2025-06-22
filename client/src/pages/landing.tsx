@@ -5,144 +5,57 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabaseClient";
 import { Building2, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-
-interface LoginData {
-  email: string;
-  password: string;
-}
-
-interface RegisterData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
 
 export default function Landing() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loginData, setLoginData] = useState<LoginData>({
-    email: "",
-    password: ""
-  });
-  const [registerData, setRegisterData] = useState<RegisterData>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
-  
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [registerData, setRegisterData] = useState({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" });
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginData) => {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Login successful",
-        description: "Welcome back to Nivasa!",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid email or password",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: async (data: RegisterData) => {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Registration successful",
-        description: "Welcome to Nivasa! You are now logged in.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Registration failed",
-        description: error.message || "Failed to create account",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleLogin = (e: React.FormEvent) => {
+  // Supabase Auth: Sign Up
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginData.email || !loginData.password) {
-      toast({
-        title: "Validation error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
+    if (!registerData.email || !registerData.password || registerData.password !== registerData.confirmPassword) {
+      toast({ title: "Validation error", description: "Please fill in all fields and match passwords", variant: "destructive" });
       return;
     }
-    loginMutation.mutate(loginData);
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: registerData.email,
+      password: registerData.password,
+      options: { data: { firstName: registerData.firstName, lastName: registerData.lastName } }
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Registration successful", description: "Check your email to confirm your account." });
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  // Supabase Auth: Sign In
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registerData.firstName || !registerData.lastName || !registerData.email || !registerData.password) {
-      toast({
-        title: "Validation error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
+    if (!loginData.email || !loginData.password) {
+      toast({ title: "Validation error", description: "Please fill in all fields", variant: "destructive" });
       return;
     }
-    if (registerData.password !== registerData.confirmPassword) {
-      toast({
-        title: "Validation error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginData.email,
+      password: loginData.password
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Login successful", description: "Welcome back to Nivasa!" });
+      window.location.reload();
     }
-    if (registerData.password.length < 6) {
-      toast({
-        title: "Validation error",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-    registerMutation.mutate(registerData);
   };
 
   return (
@@ -218,9 +131,9 @@ export default function Landing() {
                   <Button 
                     type="submit" 
                     className="w-full bg-orange-600 hover:bg-orange-700"
-                    disabled={loginMutation.isPending}
+                    disabled={loading}
                   >
-                    {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                    {loading ? "Signing in..." : "Sign In"}
                   </Button>
                 </form>
               </TabsContent>
@@ -324,9 +237,9 @@ export default function Landing() {
                   <Button 
                     type="submit" 
                     className="w-full bg-orange-600 hover:bg-orange-700"
-                    disabled={registerMutation.isPending}
+                    disabled={loading}
                   >
-                    {registerMutation.isPending ? "Creating account..." : "Create Account"}
+                    {loading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
               </TabsContent>
