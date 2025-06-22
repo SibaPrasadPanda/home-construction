@@ -73,115 +73,7 @@ export class MemStorage implements IStorage {
   }
 
   private initializeData() {
-    // Initialize with sample project
-    this.projectData = {
-      id: 1,
-      name: "Oakwood Residence",
-      location: "123 Maple Street",
-      totalBudget: "210000.00"
-    };
-
-    // Initialize with sample expenses
-    const sampleExpenses: Expense[] = [
-      {
-        id: 1,
-        amount: "8500.00",
-        category: "Foundation",
-        vendor: "ABC Construction Co.",
-        description: "Concrete Foundation Work",
-        date: "2024-10-15"
-      },
-      {
-        id: 2,
-        amount: "2340.00",
-        category: "Plumbing",
-        vendor: "Home Depot",
-        description: "Plumbing Materials",
-        date: "2024-10-14"
-      },
-      {
-        id: 3,
-        amount: "4200.00",
-        category: "Electrical",
-        vendor: "Spark Electric",
-        description: "Electrical Installation",
-        date: "2024-10-13"
-      }
-    ];
-
-    sampleExpenses.forEach(expense => {
-      this.expenses.set(expense.id, expense);
-      this.currentExpenseId = Math.max(this.currentExpenseId, expense.id + 1);
-    });
-
-    // Initialize with sample notes
-    const sampleNotes: Note[] = [
-      {
-        id: 1,
-        title: "Order bathroom tiles",
-        content: "Need to order 120 sq ft of ceramic tiles for master bathroom",
-        tags: ["materials"],
-        type: "text",
-        completed: false
-      },
-      {
-        id: 2,
-        title: "Electrician follow-up",
-        content: "Check on outlet installation in kitchen island",
-        tags: ["labor"],
-        type: "text",
-        completed: false
-      },
-      {
-        id: 3,
-        title: "Kitchen backsplash design",
-        content: "Consider subway tiles vs natural stone",
-        tags: ["ideas"],
-        type: "text",
-        completed: false
-      }
-    ];
-
-    sampleNotes.forEach(note => {
-      this.notes.set(note.id, note);
-      this.currentNoteId = Math.max(this.currentNoteId, note.id + 1);
-    });
-
-    // Initialize with sample milestones
-    const sampleMilestones: Milestone[] = [
-      {
-        id: 1,
-        title: "Foundation & Framing",
-        description: "Foundation poured and basic framing completed",
-        status: "completed",
-        expectedDate: "2024-09-30",
-        completedDate: "2024-09-30",
-        order: 1
-      },
-      {
-        id: 2,
-        title: "Plumbing & Electrical",
-        description: "Rough-in plumbing and electrical work",
-        status: "in-progress",
-        expectedDate: "2024-10-25",
-        completedDate: null,
-        order: 2
-      },
-      {
-        id: 3,
-        title: "Insulation & Drywall",
-        description: "Wall insulation and drywall installation",
-        status: "pending",
-        expectedDate: "2024-11-01",
-        completedDate: null,
-        order: 3
-      }
-    ];
-
-    sampleMilestones.forEach(milestone => {
-      this.milestones.set(milestone.id, milestone);
-      this.currentMilestoneId = Math.max(this.currentMilestoneId, milestone.id + 1);
-    });
+    // Start with empty data - users will create their own content
   }
 
   // User methods
@@ -317,7 +209,14 @@ export class MemStorage implements IStorage {
 
   async createProject(insertProject: InsertProject): Promise<Project> {
     const id = this.currentProjectId++;
-    this.projectData = { ...insertProject, id };
+    this.projectData = { 
+      ...insertProject, 
+      id,
+      status: insertProject.status || "planning",
+      description: insertProject.description || null,
+      targetCompletionDate: insertProject.targetCompletionDate || null,
+      actualCompletionDate: insertProject.actualCompletionDate || null,
+    };
     return this.projectData;
   }
 

@@ -8,15 +8,24 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { ProgressTimeline } from "@/components/dashboard/progress-timeline";
 import { AddExpenseModal } from "@/components/modals/add-expense-modal";
 import { AddNoteModal } from "@/components/modals/add-note-modal";
+import { CreateProjectModal } from "@/components/modals/create-project-modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCSV } from "@/lib/utils";
-import type { Expense, Note, Milestone } from "@shared/schema";
+import { Home, Plus } from "lucide-react";
+import type { Expense, Note, Milestone, Project } from "@shared/schema";
 
 export default function Dashboard() {
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const { toast } = useToast();
+
+  const { data: project, isLoading: projectLoading } = useQuery<Project | null>({
+    queryKey: ["/api/project"],
+  });
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
@@ -59,6 +68,48 @@ export default function Dashboard() {
       description: "Expense data exported to CSV file",
     });
   };
+
+  // Show empty state if no project exists
+  if (!projectLoading && !project) {
+    return (
+      <div className="flex-1 ml-64">
+        <TopBar 
+          title="Welcome to Nivasa" 
+          description="Your home construction management system" 
+        />
+        
+        <main className="p-6">
+          <div className="flex items-center justify-center min-h-[600px]">
+            <Card className="w-full max-w-lg text-center">
+              <CardHeader>
+                <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+                  <Home className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Create Your First Project</CardTitle>
+                <CardDescription>
+                  Start by setting up your construction project to track expenses, notes, and progress milestones.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={() => setCreateProjectOpen(true)}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Project
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+
+        <CreateProjectModal 
+          open={createProjectOpen} 
+          onOpenChange={setCreateProjectOpen} 
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 ml-64">
@@ -123,6 +174,10 @@ export default function Dashboard() {
       <AddNoteModal 
         open={addNoteOpen} 
         onOpenChange={setAddNoteOpen} 
+      />
+      <CreateProjectModal 
+        open={createProjectOpen} 
+        onOpenChange={setCreateProjectOpen} 
       />
     </div>
   );

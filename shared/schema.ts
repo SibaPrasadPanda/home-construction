@@ -59,7 +59,12 @@ export const project = pgTable("project", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   location: text("location").notNull(),
-  totalBudget: decimal("total_budget", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  budget: decimal("budget", { precision: 10, scale: 2 }).notNull(),
+  startDate: text("start_date").notNull(),
+  targetCompletionDate: text("target_completion_date"),
+  actualCompletionDate: text("actual_completion_date"),
+  status: text("status").notNull().default("planning"), // planning, in_progress, completed, on_hold
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({
