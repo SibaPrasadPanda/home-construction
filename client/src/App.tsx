@@ -14,20 +14,12 @@ import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/finance" component={FinanceTracker} />
-          <Route path="/notes" component={Notes} />
-          <Route path="/progress" component={ProgressTracker} />
-        </>
-      )}
+      <Route path="/" component={Dashboard} />
+      <Route path="/finance" component={FinanceTracker} />
+      <Route path="/notes" component={Notes} />
+      <Route path="/progress" component={ProgressTracker} />
       <Route component={NotFound} />
     </Switch>
   );
