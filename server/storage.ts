@@ -1,11 +1,11 @@
-import { 
-  users, 
+import {
+  users,
   expenses,
   notes,
   milestones,
   project,
-  type User, 
-  type InsertUser,
+  type User,
+  type UpsertUser,
   type Expense,
   type InsertExpense,
   type Note,
@@ -16,11 +16,12 @@ import {
   type InsertProject
 } from "@shared/schema";
 
+// Interface for storage operations
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // User operations
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   // Expense methods
   getAllExpenses(): Promise<Expense[]>;
@@ -50,12 +51,11 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
+  private users: Map<string, User>;
   private expenses: Map<number, Expense>;
   private notes: Map<number, Note>;
   private milestones: Map<number, Milestone>;
   private projectData: Project | undefined;
-  private currentUserId: number = 1;
   private currentExpenseId: number = 1;
   private currentNoteId: number = 1;
   private currentMilestoneId: number = 1;
@@ -182,18 +182,24 @@ export class MemStorage implements IStorage {
   }
 
   // User methods
-  async getUser(id: number): Promise<User | undefined> {
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+
+  async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existingUser = this.users.get(userData.id);
+    const user: User = {
+      id: userData.id,
+      email: userData.email ?? null,
+      firstName: userData.firstName ?? null,
+      lastName: userData.lastName ?? null,
+      profileImageUrl: userData.profileImageUrl ?? null,
+      createdAt: existingUser?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(userData.id, user);
     return user;
   }
 
@@ -237,7 +243,13 @@ export class MemStorage implements IStorage {
 
   async createNote(insertNote: InsertNote): Promise<Note> {
     const id = this.currentNoteId++;
-    const note: Note = { ...insertNote, id };
+    const note: Note = { 
+      ...insertNote, 
+      id,
+      tags: insertNote.tags || [],
+      type: insertNote.type || "text",
+      completed: insertNote.completed ?? false
+    };
     this.notes.set(id, note);
     return note;
   }
@@ -266,7 +278,14 @@ export class MemStorage implements IStorage {
 
   async createMilestone(insertMilestone: InsertMilestone): Promise<Milestone> {
     const id = this.currentMilestoneId++;
-    const milestone: Milestone = { ...insertMilestone, id };
+    const milestone: Milestone = { 
+      ...insertMilestone, 
+      id,
+      status: insertMilestone.status || "pending",
+      expectedDate: insertMilestone.expectedDate || null,
+      completedDate: insertMilestone.completedDate || null,
+      order: insertMilestone.order || 0
+    };
     this.milestones.set(id, milestone);
     return milestone;
   }
