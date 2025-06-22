@@ -2,6 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AddMilestoneModalProps {
   open: boolean;
@@ -12,11 +14,29 @@ export function AddMilestoneModal({ open, onOpenChange }: AddMilestoneModalProps
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [expectedDate, setExpectedDate] = useState("");
+  const queryClient = useQueryClient();
+
+  const addMilestoneMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/milestones", {
+        title,
+        description,
+        expectedDate: expectedDate || null,
+        status: "pending",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/milestones"] });
+      setTitle("");
+      setDescription("");
+      setExpectedDate("");
+      onOpenChange(false);
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement milestone creation logic (API call)
-    onOpenChange(false);
+    addMilestoneMutation.mutate();
   };
 
   return (
@@ -47,7 +67,7 @@ export function AddMilestoneModal({ open, onOpenChange }: AddMilestoneModalProps
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add</Button>
+            <Button type="submit" disabled={addMilestoneMutation.isPending}>Add</Button>
           </div>
         </form>
       </DialogContent>
