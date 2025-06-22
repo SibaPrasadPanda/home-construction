@@ -1,12 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { Home, DollarSign, StickyNote, CheckSquare } from "lucide-react";
+import { Home, DollarSign, StickyNote, CheckSquare, IndianRupeeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import type { Project } from "@shared/schema";
 
 const navItems = [
   { href: "/", icon: Home, label: "Dashboard" },
-  { href: "/finance", icon: DollarSign, label: "Finance Tracker" },
+  { href: "/finance", icon: IndianRupeeIcon, label: "Finance Tracker" },
   { href: "/notes", icon: StickyNote, label: "Notes" },
   { href: "/progress", icon: CheckSquare, label: "Progress Tracker" },
 ];

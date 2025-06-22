@@ -10,10 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, calculateProgress } from "@/lib/utils";
 import type { Milestone } from "@shared/schema";
+import { AddMilestoneModal } from "@/components/modals/add-milestone-modal";
 
 export default function ProgressTracker() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [addMilestoneOpen, setAddMilestoneOpen] = useState(false);
 
   const { data: milestones = [], isLoading } = useQuery<Milestone[]>({
     queryKey: ["/api/milestones"],
@@ -107,7 +109,6 @@ export default function ProgressTracker() {
         title="Progress Tracker" 
         description="Monitor your construction milestones and timeline" 
       />
-      
       <main className="p-6 space-y-6">
         {/* Progress Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -160,7 +161,7 @@ export default function ProgressTracker() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Construction Milestones</CardTitle>
-              <Button>
+              <Button onClick={() => setAddMilestoneOpen(true)}>
                 <Plus className="mr-2" size={16} />
                 Add Milestone
               </Button>
@@ -250,6 +251,7 @@ export default function ProgressTracker() {
           </CardContent>
         </Card>
       </main>
+      <AddMilestoneModal open={addMilestoneOpen} onOpenChange={setAddMilestoneOpen} />
     </div>
   );
 }

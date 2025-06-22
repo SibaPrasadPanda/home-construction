@@ -49,7 +49,7 @@ export default function FinanceTracker() {
   // Filter expenses
   const filteredExpenses = expenses.filter(expense => {
     const matchesCategory = !categoryFilter || expense.category === categoryFilter;
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       expense.vendor.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -80,7 +80,7 @@ export default function FinanceTracker() {
     }));
 
     exportToCSV(exportData, `nivasa-expenses-filtered-${new Date().toISOString().split('T')[0]}.csv`);
-    
+
     toast({
       title: "Export successful",
       description: "Filtered expense data exported to CSV file",
@@ -95,11 +95,11 @@ export default function FinanceTracker() {
 
   return (
     <div className="flex-1 ml-64">
-      <TopBar 
-        title="Finance Tracker" 
-        description="Manage your construction expenses and budget" 
+      <TopBar
+        title="Finance Tracker"
+        description="Manage your construction expenses and budget"
       />
-      
+
       <main className="p-6 space-y-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -111,7 +111,7 @@ export default function FinanceTracker() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="text-center">
@@ -120,13 +120,13 @@ export default function FinanceTracker() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Average Expense</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {filteredExpenses.length > 0 ? formatCurrency(totalExpenses / filteredExpenses.length) : "$0.00"}
+                  {filteredExpenses.length > 0 ? formatCurrency(totalExpenses / filteredExpenses.length) : "₹0.00"}
                 </p>
               </div>
             </CardContent>
@@ -158,12 +158,12 @@ export default function FinanceTracker() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="sm:max-w-xs"
               />
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter || "all"} onValueChange={(value) => setCategoryFilter(value === "all" ? "" : value)}>
                 <SelectTrigger className="sm:max-w-xs">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>
                       {category}
@@ -216,8 +216,8 @@ export default function FinanceTracker() {
                             <Button size="sm" variant="outline">
                               <Edit size={14} />
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => handleDelete(expense.id)}
                               disabled={deleteExpenseMutation.isPending}
@@ -236,9 +236,9 @@ export default function FinanceTracker() {
         </Card>
       </main>
 
-      <AddExpenseModal 
-        open={addExpenseOpen} 
-        onOpenChange={setAddExpenseOpen} 
+      <AddExpenseModal
+        open={addExpenseOpen}
+        onOpenChange={setAddExpenseOpen}
       />
     </div>
   );

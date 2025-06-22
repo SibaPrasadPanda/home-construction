@@ -1,4 +1,4 @@
-import { DollarSign, PiggyBank, StickyNote, TrendingUp } from "lucide-react";
+import { DollarSign, IndianRupeeIcon, PiggyBank, StickyNote, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
@@ -17,9 +17,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
     {
       title: "Total Expenses",
       value: formatCurrency(stats.totalExpenses),
-      change: "2.3% vs budget",
+      change: `${stats.budgetUsedPercent}% of budget used`,
       changeType: "positive" as const,
-      icon: DollarSign,
+      icon: IndianRupeeIcon,
       bgColor: "bg-construction-100 dark:bg-construction-900/20",
       iconColor: "text-construction-600",
     },
@@ -35,7 +35,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
     {
       title: "Active Notes",
       value: stats.activeNotes.toString(),
-      change: "4 added today",
+      change: `${stats.activeNotes} active notes`,
       changeType: "positive" as const,
       icon: StickyNote,
       bgColor: "bg-yellow-100 dark:bg-yellow-900/20",

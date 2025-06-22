@@ -142,12 +142,12 @@ export default function Notes() {
                 />
               </div>
               
-              <Select value={tagFilter} onValueChange={setTagFilter}>
+              <Select value={tagFilter || "all"} onValueChange={value => setTagFilter(value === "all" ? "" : value)}>
                 <SelectTrigger className="sm:max-w-xs">
                   <SelectValue placeholder="Filter by tag" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Tags</SelectItem>
+                  <SelectItem value="all">All Tags</SelectItem>
                   {allTags.map(tag => (
                     <SelectItem key={tag} value={tag}>
                       {tag}
@@ -156,12 +156,12 @@ export default function Notes() {
                 </SelectContent>
               </Select>
 
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <Select value={typeFilter || "all"} onValueChange={value => setTypeFilter(value === "all" ? "" : value)}>
                 <SelectTrigger className="sm:max-w-xs">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="text">Text</SelectItem>
                   <SelectItem value="checklist">Checklist</SelectItem>
                   <SelectItem value="link">Link</SelectItem>
