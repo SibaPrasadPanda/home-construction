@@ -1,11 +1,8 @@
 import {
-  users,
   expenses,
   notes,
   milestones,
   project,
-  type User,
-  type InsertUser,
   type Expense,
   type InsertExpense,
   type Note,
@@ -18,11 +15,6 @@ import {
 
 // Interface for storage operations
 export interface IStorage {
-  // User operations for authentication
-  getUser(id: number): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  
   // Expense methods
   getAllExpenses(): Promise<Expense[]>;
   getExpense(id: number): Promise<Expense | undefined>;
@@ -51,21 +43,16 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private usersByEmail: Map<string, User>;
   private expenses: Map<number, Expense>;
   private notes: Map<number, Note>;
   private milestones: Map<number, Milestone>;
   private projectData: Project | undefined;
-  private currentUserId: number = 1;
   private currentExpenseId: number = 1;
   private currentNoteId: number = 1;
   private currentMilestoneId: number = 1;
   private currentProjectId: number = 1;
 
   constructor() {
-    this.users = new Map();
-    this.usersByEmail = new Map();
     this.expenses = new Map();
     this.notes = new Map();
     this.milestones = new Map();
@@ -74,32 +61,6 @@ export class MemStorage implements IStorage {
 
   private initializeData() {
     // Start with empty data - users will create their own content
-  }
-
-  // User methods
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
-
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    return this.usersByEmail.get(email);
-  }
-
-  async createUser(userData: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = {
-      ...userData,
-      id,
-      profileImageUrl: userData.profileImageUrl || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    this.users.set(id, user);
-    this.usersByEmail.set(userData.email, user);
-    return user;
   }
 
   // Expense methods
