@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "../client/src/lib/supabaseClient";
 import type {
   Expense,
   InsertExpense,
@@ -42,6 +42,8 @@ export interface IStorage {
 export class SupabaseStorage implements IStorage {
   // Project methods
   async getProject(userId: string): Promise<Project | undefined> {
+    console.log('🔍 Fetching project from Supabase for user:', userId);
+    
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -49,14 +51,17 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-      console.error('Error fetching project:', error);
+      console.error('❌ Error fetching project:', error);
       throw new Error('Failed to fetch project');
     }
 
+    console.log('✅ Project data from Supabase:', data);
     return data || undefined;
   }
 
   async createProject(insertProject: InsertProject, userId: string): Promise<Project> {
+    console.log('🔄 Creating project in Supabase:', { insertProject, userId });
+    
     const projectData = {
       ...insertProject,
       user_id: userId,
@@ -69,14 +74,17 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error creating project:', error);
+      console.error('❌ Error creating project:', error);
       throw new Error('Failed to create project');
     }
 
+    console.log('✅ Project created in Supabase:', data);
     return data;
   }
 
   async updateProject(updateData: Partial<InsertProject>, userId: string): Promise<Project | undefined> {
+    console.log('🔄 Updating project in Supabase:', { updateData, userId });
+    
     const { data, error } = await supabase
       .from('projects')
       .update(updateData)
@@ -85,15 +93,18 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error updating project:', error);
+      console.error('❌ Error updating project:', error);
       throw new Error('Failed to update project');
     }
 
+    console.log('✅ Project updated in Supabase:', data);
     return data || undefined;
   }
 
   // Expense methods
   async getAllExpenses(userId: string): Promise<Expense[]> {
+    console.log('🔍 Fetching expenses from Supabase for user:', userId);
+    
     const { data, error } = await supabase
       .from('expenses')
       .select('*')
@@ -101,10 +112,11 @@ export class SupabaseStorage implements IStorage {
       .order('date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('❌ Error fetching expenses:', error);
       throw new Error('Failed to fetch expenses');
     }
 
+    console.log('✅ Expenses from Supabase:', data?.length || 0, 'records');
     return data || [];
   }
 
@@ -117,7 +129,7 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching expense:', error);
+      console.error('❌ Error fetching expense:', error);
       throw new Error('Failed to fetch expense');
     }
 
@@ -125,6 +137,8 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createExpense(insertExpense: InsertExpense, userId: string): Promise<Expense> {
+    console.log('🔄 Creating expense in Supabase:', { insertExpense, userId });
+    
     const expenseData = {
       ...insertExpense,
       user_id: userId,
@@ -137,10 +151,11 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error creating expense:', error);
+      console.error('❌ Error creating expense:', error);
       throw new Error('Failed to create expense');
     }
 
+    console.log('✅ Expense created in Supabase:', data);
     return data;
   }
 
@@ -154,7 +169,7 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error updating expense:', error);
+      console.error('❌ Error updating expense:', error);
       throw new Error('Failed to update expense');
     }
 
@@ -169,7 +184,7 @@ export class SupabaseStorage implements IStorage {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error deleting expense:', error);
+      console.error('❌ Error deleting expense:', error);
       throw new Error('Failed to delete expense');
     }
 
@@ -178,6 +193,8 @@ export class SupabaseStorage implements IStorage {
 
   // Note methods
   async getAllNotes(userId: string): Promise<Note[]> {
+    console.log('🔍 Fetching notes from Supabase for user:', userId);
+    
     const { data, error } = await supabase
       .from('notes')
       .select('*')
@@ -185,10 +202,11 @@ export class SupabaseStorage implements IStorage {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching notes:', error);
+      console.error('❌ Error fetching notes:', error);
       throw new Error('Failed to fetch notes');
     }
 
+    console.log('✅ Notes from Supabase:', data?.length || 0, 'records');
     return data || [];
   }
 
@@ -201,7 +219,7 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching note:', error);
+      console.error('❌ Error fetching note:', error);
       throw new Error('Failed to fetch note');
     }
 
@@ -209,6 +227,8 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createNote(insertNote: InsertNote, userId: string): Promise<Note> {
+    console.log('🔄 Creating note in Supabase:', { insertNote, userId });
+    
     const noteData = {
       ...insertNote,
       user_id: userId,
@@ -224,10 +244,11 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error creating note:', error);
+      console.error('❌ Error creating note:', error);
       throw new Error('Failed to create note');
     }
 
+    console.log('✅ Note created in Supabase:', data);
     return data;
   }
 
@@ -241,7 +262,7 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error updating note:', error);
+      console.error('❌ Error updating note:', error);
       throw new Error('Failed to update note');
     }
 
@@ -256,7 +277,7 @@ export class SupabaseStorage implements IStorage {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error deleting note:', error);
+      console.error('❌ Error deleting note:', error);
       throw new Error('Failed to delete note');
     }
 
@@ -265,6 +286,8 @@ export class SupabaseStorage implements IStorage {
 
   // Milestone methods
   async getAllMilestones(userId: string): Promise<Milestone[]> {
+    console.log('🔍 Fetching milestones from Supabase for user:', userId);
+    
     const { data, error } = await supabase
       .from('milestones')
       .select('*')
@@ -272,10 +295,11 @@ export class SupabaseStorage implements IStorage {
       .order('order', { ascending: true });
 
     if (error) {
-      console.error('Error fetching milestones:', error);
+      console.error('❌ Error fetching milestones:', error);
       throw new Error('Failed to fetch milestones');
     }
 
+    console.log('✅ Milestones from Supabase:', data?.length || 0, 'records');
     return data || [];
   }
 
@@ -288,7 +312,7 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching milestone:', error);
+      console.error('❌ Error fetching milestone:', error);
       throw new Error('Failed to fetch milestone');
     }
 
@@ -296,6 +320,8 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createMilestone(insertMilestone: InsertMilestone, userId: string): Promise<Milestone> {
+    console.log('🔄 Creating milestone in Supabase:', { insertMilestone, userId });
+    
     const milestoneData = {
       ...insertMilestone,
       user_id: userId,
@@ -312,10 +338,11 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error creating milestone:', error);
+      console.error('❌ Error creating milestone:', error);
       throw new Error('Failed to create milestone');
     }
 
+    console.log('✅ Milestone created in Supabase:', data);
     return data;
   }
 
@@ -329,7 +356,7 @@ export class SupabaseStorage implements IStorage {
       .single();
 
     if (error) {
-      console.error('Error updating milestone:', error);
+      console.error('❌ Error updating milestone:', error);
       throw new Error('Failed to update milestone');
     }
 
@@ -344,7 +371,7 @@ export class SupabaseStorage implements IStorage {
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error deleting milestone:', error);
+      console.error('❌ Error deleting milestone:', error);
       throw new Error('Failed to delete milestone');
     }
 
@@ -352,4 +379,5 @@ export class SupabaseStorage implements IStorage {
   }
 }
 
+// Export the Supabase storage instance
 export const storage = new SupabaseStorage();
