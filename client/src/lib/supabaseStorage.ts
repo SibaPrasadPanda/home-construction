@@ -25,7 +25,14 @@ export class SupabaseStorage {
       .eq('user_id', user.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+    // Explicitly handle the "no rows found" case without throwing an error
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No project found - this is not an error, just return null
+        console.log('ℹ️ No project found for user');
+        return null;
+      }
+      // For any other error, throw it
       console.error('❌ Error fetching project:', error);
       throw new Error('Failed to fetch project');
     }
