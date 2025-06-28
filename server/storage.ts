@@ -1,192 +1,355 @@
-import {
-  expenses,
-  notes,
-  milestones,
-  project,
-  type Expense,
-  type InsertExpense,
-  type Note,
-  type InsertNote,
-  type Milestone,
-  type InsertMilestone,
-  type Project,
-  type InsertProject
+import { supabase } from "@/lib/supabaseClient";
+import type {
+  Expense,
+  InsertExpense,
+  Note,
+  InsertNote,
+  Milestone,
+  InsertMilestone,
+  Project,
+  InsertProject
 } from "@shared/schema";
 
 // Interface for storage operations
 export interface IStorage {
   // Expense methods
-  getAllExpenses(): Promise<Expense[]>;
-  getExpense(id: number): Promise<Expense | undefined>;
-  createExpense(expense: InsertExpense): Promise<Expense>;
-  updateExpense(id: number, expense: Partial<InsertExpense>): Promise<Expense | undefined>;
-  deleteExpense(id: number): Promise<boolean>;
+  getAllExpenses(userId: string): Promise<Expense[]>;
+  getExpense(id: string, userId: string): Promise<Expense | undefined>;
+  createExpense(expense: InsertExpense, userId: string): Promise<Expense>;
+  updateExpense(id: string, expense: Partial<InsertExpense>, userId: string): Promise<Expense | undefined>;
+  deleteExpense(id: string, userId: string): Promise<boolean>;
   
   // Note methods
-  getAllNotes(): Promise<Note[]>;
-  getNote(id: number): Promise<Note | undefined>;
-  createNote(note: InsertNote): Promise<Note>;
-  updateNote(id: number, note: Partial<InsertNote>): Promise<Note | undefined>;
-  deleteNote(id: number): Promise<boolean>;
+  getAllNotes(userId: string): Promise<Note[]>;
+  getNote(id: string, userId: string): Promise<Note | undefined>;
+  createNote(note: InsertNote, userId: string): Promise<Note>;
+  updateNote(id: string, note: Partial<InsertNote>, userId: string): Promise<Note | undefined>;
+  deleteNote(id: string, userId: string): Promise<boolean>;
   
   // Milestone methods
-  getAllMilestones(): Promise<Milestone[]>;
-  getMilestone(id: number): Promise<Milestone | undefined>;
-  createMilestone(milestone: InsertMilestone): Promise<Milestone>;
-  updateMilestone(id: number, milestone: Partial<InsertMilestone>): Promise<Milestone | undefined>;
-  deleteMilestone(id: number): Promise<boolean>;
+  getAllMilestones(userId: string): Promise<Milestone[]>;
+  getMilestone(id: string, userId: string): Promise<Milestone | undefined>;
+  createMilestone(milestone: InsertMilestone, userId: string): Promise<Milestone>;
+  updateMilestone(id: string, milestone: Partial<InsertMilestone>, userId: string): Promise<Milestone | undefined>;
+  deleteMilestone(id: string, userId: string): Promise<boolean>;
   
   // Project methods
-  getProject(): Promise<Project | undefined>;
-  createProject(project: InsertProject): Promise<Project>;
-  updateProject(project: Partial<InsertProject>): Promise<Project | undefined>;
+  getProject(userId: string): Promise<Project | undefined>;
+  createProject(project: InsertProject, userId: string): Promise<Project>;
+  updateProject(project: Partial<InsertProject>, userId: string): Promise<Project | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private expenses: Map<number, Expense>;
-  private notes: Map<number, Note>;
-  private milestones: Map<number, Milestone>;
-  private projectData: Project | undefined;
-  private currentExpenseId: number = 1;
-  private currentNoteId: number = 1;
-  private currentMilestoneId: number = 1;
-  private currentProjectId: number = 1;
+export class SupabaseStorage implements IStorage {
+  // Project methods
+  async getProject(userId: string): Promise<Project | undefined> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-  constructor() {
-    this.expenses = new Map();
-    this.notes = new Map();
-    this.milestones = new Map();
-    this.initializeData();
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      console.error('Error fetching project:', error);
+      throw new Error('Failed to fetch project');
+    }
+
+    return data || undefined;
   }
 
-  private initializeData() {
-    // Start with empty data - users will create their own content
+  async createProject(insertProject: InsertProject, userId: string): Promise<Project> {
+    const projectData = {
+      ...insertProject,
+      user_id: userId,
+    };
+
+    const { data, error } = await supabase
+      .from('projects')
+      .insert(projectData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating project:', error);
+      throw new Error('Failed to create project');
+    }
+
+    return data;
+  }
+
+  async updateProject(updateData: Partial<InsertProject>, userId: string): Promise<Project | undefined> {
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updateData)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating project:', error);
+      throw new Error('Failed to update project');
+    }
+
+    return data || undefined;
   }
 
   // Expense methods
-  async getAllExpenses(): Promise<Expense[]> {
-    return Array.from(this.expenses.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  async getAllExpenses(userId: string): Promise<Expense[]> {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching expenses:', error);
+      throw new Error('Failed to fetch expenses');
+    }
+
+    return data || [];
   }
 
-  async getExpense(id: number): Promise<Expense | undefined> {
-    return this.expenses.get(id);
+  async getExpense(id: string, userId: string): Promise<Expense | undefined> {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching expense:', error);
+      throw new Error('Failed to fetch expense');
+    }
+
+    return data || undefined;
   }
 
-  async createExpense(insertExpense: InsertExpense): Promise<Expense> {
-    const id = this.currentExpenseId++;
-    const expense: Expense = { ...insertExpense, id };
-    this.expenses.set(id, expense);
-    return expense;
+  async createExpense(insertExpense: InsertExpense, userId: string): Promise<Expense> {
+    const expenseData = {
+      ...insertExpense,
+      user_id: userId,
+    };
+
+    const { data, error } = await supabase
+      .from('expenses')
+      .insert(expenseData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating expense:', error);
+      throw new Error('Failed to create expense');
+    }
+
+    return data;
   }
 
-  async updateExpense(id: number, updateData: Partial<InsertExpense>): Promise<Expense | undefined> {
-    const expense = this.expenses.get(id);
-    if (!expense) return undefined;
-    
-    const updatedExpense = { ...expense, ...updateData };
-    this.expenses.set(id, updatedExpense);
-    return updatedExpense;
+  async updateExpense(id: string, updateData: Partial<InsertExpense>, userId: string): Promise<Expense | undefined> {
+    const { data, error } = await supabase
+      .from('expenses')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating expense:', error);
+      throw new Error('Failed to update expense');
+    }
+
+    return data || undefined;
   }
 
-  async deleteExpense(id: number): Promise<boolean> {
-    return this.expenses.delete(id);
+  async deleteExpense(id: string, userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('expenses')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting expense:', error);
+      throw new Error('Failed to delete expense');
+    }
+
+    return true;
   }
 
   // Note methods
-  async getAllNotes(): Promise<Note[]> {
-    return Array.from(this.notes.values());
+  async getAllNotes(userId: string): Promise<Note[]> {
+    const { data, error } = await supabase
+      .from('notes')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching notes:', error);
+      throw new Error('Failed to fetch notes');
+    }
+
+    return data || [];
   }
 
-  async getNote(id: number): Promise<Note | undefined> {
-    return this.notes.get(id);
+  async getNote(id: string, userId: string): Promise<Note | undefined> {
+    const { data, error } = await supabase
+      .from('notes')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching note:', error);
+      throw new Error('Failed to fetch note');
+    }
+
+    return data || undefined;
   }
 
-  async createNote(insertNote: InsertNote): Promise<Note> {
-    const id = this.currentNoteId++;
-    const note: Note = { 
-      ...insertNote, 
-      id,
+  async createNote(insertNote: InsertNote, userId: string): Promise<Note> {
+    const noteData = {
+      ...insertNote,
+      user_id: userId,
       tags: insertNote.tags || [],
       type: insertNote.type || "text",
       completed: insertNote.completed ?? false
     };
-    this.notes.set(id, note);
-    return note;
+
+    const { data, error } = await supabase
+      .from('notes')
+      .insert(noteData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating note:', error);
+      throw new Error('Failed to create note');
+    }
+
+    return data;
   }
 
-  async updateNote(id: number, updateData: Partial<InsertNote>): Promise<Note | undefined> {
-    const note = this.notes.get(id);
-    if (!note) return undefined;
-    
-    const updatedNote = { ...note, ...updateData };
-    this.notes.set(id, updatedNote);
-    return updatedNote;
+  async updateNote(id: string, updateData: Partial<InsertNote>, userId: string): Promise<Note | undefined> {
+    const { data, error } = await supabase
+      .from('notes')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating note:', error);
+      throw new Error('Failed to update note');
+    }
+
+    return data || undefined;
   }
 
-  async deleteNote(id: number): Promise<boolean> {
-    return this.notes.delete(id);
+  async deleteNote(id: string, userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('notes')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting note:', error);
+      throw new Error('Failed to delete note');
+    }
+
+    return true;
   }
 
   // Milestone methods
-  async getAllMilestones(): Promise<Milestone[]> {
-    return Array.from(this.milestones.values()).sort((a, b) => a.order - b.order);
+  async getAllMilestones(userId: string): Promise<Milestone[]> {
+    const { data, error } = await supabase
+      .from('milestones')
+      .select('*')
+      .eq('user_id', userId)
+      .order('order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching milestones:', error);
+      throw new Error('Failed to fetch milestones');
+    }
+
+    return data || [];
   }
 
-  async getMilestone(id: number): Promise<Milestone | undefined> {
-    return this.milestones.get(id);
+  async getMilestone(id: string, userId: string): Promise<Milestone | undefined> {
+    const { data, error } = await supabase
+      .from('milestones')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching milestone:', error);
+      throw new Error('Failed to fetch milestone');
+    }
+
+    return data || undefined;
   }
 
-  async createMilestone(insertMilestone: InsertMilestone): Promise<Milestone> {
-    const id = this.currentMilestoneId++;
-    const milestone: Milestone = { 
-      ...insertMilestone, 
-      id,
+  async createMilestone(insertMilestone: InsertMilestone, userId: string): Promise<Milestone> {
+    const milestoneData = {
+      ...insertMilestone,
+      user_id: userId,
       status: insertMilestone.status || "pending",
-      expectedDate: insertMilestone.expectedDate || null,
-      completedDate: insertMilestone.completedDate || null,
+      expected_date: insertMilestone.expectedDate || null,
+      completed_date: insertMilestone.completedDate || null,
       order: insertMilestone.order || 0
     };
-    this.milestones.set(id, milestone);
-    return milestone;
+
+    const { data, error } = await supabase
+      .from('milestones')
+      .insert(milestoneData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating milestone:', error);
+      throw new Error('Failed to create milestone');
+    }
+
+    return data;
   }
 
-  async updateMilestone(id: number, updateData: Partial<InsertMilestone>): Promise<Milestone | undefined> {
-    const milestone = this.milestones.get(id);
-    if (!milestone) return undefined;
-    
-    const updatedMilestone = { ...milestone, ...updateData };
-    this.milestones.set(id, updatedMilestone);
-    return updatedMilestone;
+  async updateMilestone(id: string, updateData: Partial<InsertMilestone>, userId: string): Promise<Milestone | undefined> {
+    const { data, error } = await supabase
+      .from('milestones')
+      .update(updateData)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating milestone:', error);
+      throw new Error('Failed to update milestone');
+    }
+
+    return data || undefined;
   }
 
-  async deleteMilestone(id: number): Promise<boolean> {
-    return this.milestones.delete(id);
-  }
+  async deleteMilestone(id: string, userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('milestones')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
-  // Project methods
-  async getProject(): Promise<Project | undefined> {
-    return this.projectData;
-  }
+    if (error) {
+      console.error('Error deleting milestone:', error);
+      throw new Error('Failed to delete milestone');
+    }
 
-  async createProject(insertProject: InsertProject): Promise<Project> {
-    const id = this.currentProjectId++;
-    this.projectData = { 
-      ...insertProject, 
-      id,
-      status: insertProject.status || "planning",
-      description: insertProject.description || null,
-      targetCompletionDate: insertProject.targetCompletionDate || null,
-      actualCompletionDate: insertProject.actualCompletionDate || null,
-    };
-    return this.projectData;
-  }
-
-  async updateProject(updateData: Partial<InsertProject>): Promise<Project | undefined> {
-    if (!this.projectData) return undefined;
-    
-    this.projectData = { ...this.projectData, ...updateData };
-    return this.projectData;
+    return true;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new SupabaseStorage();
