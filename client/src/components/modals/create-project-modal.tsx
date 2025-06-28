@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { insertProjectSchema, type InsertProject } from "@shared/schema";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -34,23 +35,11 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertProject) => {
-      const response = await fetch("/api/project", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create project");
-      }
-      
-      return response.json();
+      return await supabaseStorage.createProject(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/project"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       form.reset();
       onOpenChange(false);
       toast({

@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { insertNoteSchema, type InsertNote } from "@shared/schema";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 
 interface AddNoteModalProps {
   open: boolean;
@@ -40,12 +40,11 @@ export function AddNoteModal({ open, onOpenChange }: AddNoteModalProps) {
 
   const createNoteMutation = useMutation({
     mutationFn: async (data: InsertNote) => {
-      const response = await apiRequest("POST", "/api/notes", data);
-      return response.json();
+      return await supabaseStorage.createNote(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "Success",
         description: "Note added successfully",
@@ -54,10 +53,10 @@ export function AddNoteModal({ open, onOpenChange }: AddNoteModalProps) {
       setSelectedTags([]);
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to add note",
+        description: error.message,
         variant: "destructive",
       });
     },

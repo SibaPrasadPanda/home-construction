@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { insertExpenseSchema, type InsertExpense } from "@shared/schema";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 
 interface AddExpenseModalProps {
   open: boolean;
@@ -54,12 +54,11 @@ export function AddExpenseModal({ open, onOpenChange }: AddExpenseModalProps) {
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data: InsertExpense) => {
-      const response = await apiRequest("POST", "/api/expenses", data);
-      return response.json();
+      return await supabaseStorage.createExpense(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "Success",
         description: "Expense added successfully",
@@ -67,10 +66,10 @@ export function AddExpenseModal({ open, onOpenChange }: AddExpenseModalProps) {
       form.reset();
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to add expense",
+        description: error.message,
         variant: "destructive",
       });
     },

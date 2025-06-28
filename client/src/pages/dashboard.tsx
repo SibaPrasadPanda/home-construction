@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCSV } from "@/lib/utils";
 import { Home, Plus } from "lucide-react";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 import type { Expense, Note, Milestone, Project } from "@shared/schema";
 
 export default function Dashboard() {
@@ -24,23 +25,32 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const { data: project, isLoading: projectLoading } = useQuery<Project | null>({
-    queryKey: ["/api/project"],
+    queryKey: ["project"],
+    queryFn: () => supabaseStorage.getProject(),
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
+    queryKey: ["dashboard-stats"],
+    queryFn: () => supabaseStorage.getDashboardStats(),
+    enabled: !!project, // Only fetch stats if project exists
   });
 
   const { data: expenses = [], isLoading: expensesLoading } = useQuery<Expense[]>({
-    queryKey: ["/api/expenses"],
+    queryKey: ["expenses"],
+    queryFn: () => supabaseStorage.getAllExpenses(),
+    enabled: !!project,
   });
 
   const { data: notes = [], isLoading: notesLoading } = useQuery<Note[]>({
-    queryKey: ["/api/notes"],
+    queryKey: ["notes"],
+    queryFn: () => supabaseStorage.getAllNotes(),
+    enabled: !!project,
   });
 
   const { data: milestones = [], isLoading: milestonesLoading } = useQuery<Milestone[]>({
-    queryKey: ["/api/milestones"],
+    queryKey: ["milestones"],
+    queryFn: () => supabaseStorage.getAllMilestones(),
+    enabled: !!project,
   });
 
   const handleExportData = () => {

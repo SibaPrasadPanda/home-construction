@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Download } from "lucide-react";
 import { AddExpenseModal } from "@/components/modals/add-expense-modal";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate, exportToCSV } from "@/lib/utils";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 import type { Expense } from "@shared/schema";
 
 export default function FinanceTracker() {
@@ -22,25 +22,26 @@ export default function FinanceTracker() {
   const queryClient = useQueryClient();
 
   const { data: expenses = [], isLoading } = useQuery<Expense[]>({
-    queryKey: ["/api/expenses"],
+    queryKey: ["expenses"],
+    queryFn: () => supabaseStorage.getAllExpenses(),
   });
 
   const deleteExpenseMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/expenses/${id}`);
+    mutationFn: async (id: string) => {
+      return await supabaseStorage.deleteExpense(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "Success",
         description: "Expense deleted successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete expense",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -87,7 +88,7 @@ export default function FinanceTracker() {
     });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this expense?")) {
       deleteExpenseMutation.mutate(id);
     }

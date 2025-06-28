@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Check, Clock, Circle, Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { formatDate, calculateProgress } from "@/lib/utils";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 import type { Milestone } from "@shared/schema";
 import { AddMilestoneModal } from "@/components/modals/add-milestone-modal";
 
@@ -18,51 +18,51 @@ export default function ProgressTracker() {
   const [addMilestoneOpen, setAddMilestoneOpen] = useState(false);
 
   const { data: milestones = [], isLoading } = useQuery<Milestone[]>({
-    queryKey: ["/api/milestones"],
+    queryKey: ["milestones"],
+    queryFn: () => supabaseStorage.getAllMilestones(),
   });
 
   const updateMilestoneMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const updateData: any = { status };
       if (status === "completed") {
         updateData.completedDate = new Date().toISOString().split('T')[0];
       }
-      const response = await apiRequest("PUT", `/api/milestones/${id}`, updateData);
-      return response.json();
+      return await supabaseStorage.updateMilestone(id, updateData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/milestones"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["milestones"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "Success",
         description: "Milestone updated successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to update milestone",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
   const deleteMilestoneMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/milestones/${id}`);
+    mutationFn: async (id: string) => {
+      return await supabaseStorage.deleteMilestone(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/milestones"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["milestones"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "Success",
         description: "Milestone deleted successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete milestone",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -93,11 +93,11 @@ export default function ProgressTracker() {
   const completedMilestones = milestones.filter(m => m.status === 'completed').length;
   const overallProgress = calculateProgress(completedMilestones, milestones.length);
 
-  const handleStatusChange = (id: number, newStatus: string) => {
+  const handleStatusChange = (id: string, newStatus: string) => {
     updateMilestoneMutation.mutate({ id, status: newStatus });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this milestone?")) {
       deleteMilestoneMutation.mutate(id);
     }

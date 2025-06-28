@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Edit, Trash2, FileText, CheckSquare, Link as LinkIcon } from "lucide-react";
 import { AddNoteModal } from "@/components/modals/add-note-modal";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 import type { Note } from "@shared/schema";
 
 export default function Notes() {
@@ -21,25 +21,26 @@ export default function Notes() {
   const queryClient = useQueryClient();
 
   const { data: notes = [], isLoading } = useQuery<Note[]>({
-    queryKey: ["/api/notes"],
+    queryKey: ["notes"],
+    queryFn: () => supabaseStorage.getAllNotes(),
   });
 
   const deleteNoteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/notes/${id}`);
+    mutationFn: async (id: string) => {
+      return await supabaseStorage.deleteNote(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "Success",
         description: "Note deleted successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete note",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -74,7 +75,7 @@ export default function Notes() {
     link: LinkIcon,
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this note?")) {
       deleteNoteMutation.mutate(id);
     }

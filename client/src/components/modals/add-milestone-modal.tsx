@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { supabaseStorage } from "@/lib/supabaseStorage";
 
 interface AddMilestoneModalProps {
   open: boolean;
@@ -15,10 +16,11 @@ export function AddMilestoneModal({ open, onOpenChange }: AddMilestoneModalProps
   const [description, setDescription] = useState("");
   const [expectedDate, setExpectedDate] = useState("");
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const addMilestoneMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/milestones", {
+      return await supabaseStorage.createMilestone({
         title,
         description,
         expectedDate: expectedDate || null,
@@ -26,11 +28,23 @@ export function AddMilestoneModal({ open, onOpenChange }: AddMilestoneModalProps
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/milestones"] });
+      queryClient.invalidateQueries({ queryKey: ["milestones"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setTitle("");
       setDescription("");
       setExpectedDate("");
       onOpenChange(false);
+      toast({
+        title: "Success",
+        description: "Milestone added successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -67,7 +81,9 @@ export function AddMilestoneModal({ open, onOpenChange }: AddMilestoneModalProps
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={addMilestoneMutation.isPending}>Add</Button>
+            <Button type="submit" disabled={addMilestoneMutation.isPending}>
+              {addMilestoneMutation.isPending ? "Adding..." : "Add"}
+            </Button>
           </div>
         </form>
       </DialogContent>
