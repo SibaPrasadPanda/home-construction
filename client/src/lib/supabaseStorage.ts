@@ -10,6 +10,47 @@ import type {
   InsertProject
 } from "@shared/schema";
 
+// Helper function to transform camelCase keys to snake_case for database operations
+function transformProjectForDatabase(project: Partial<InsertProject>) {
+  const transformed: any = { ...project };
+  
+  // Transform camelCase keys to snake_case
+  if ('startDate' in transformed) {
+    transformed.start_date = transformed.startDate;
+    delete transformed.startDate;
+  }
+  
+  if ('targetCompletionDate' in transformed) {
+    transformed.target_completion_date = transformed.targetCompletionDate;
+    delete transformed.targetCompletionDate;
+  }
+  
+  if ('actualCompletionDate' in transformed) {
+    transformed.actual_completion_date = transformed.actualCompletionDate;
+    delete transformed.actualCompletionDate;
+  }
+  
+  return transformed;
+}
+
+// Helper function to transform milestone data for database operations
+function transformMilestoneForDatabase(milestone: Partial<InsertMilestone>) {
+  const transformed: any = { ...milestone };
+  
+  // Transform camelCase keys to snake_case
+  if ('expectedDate' in transformed) {
+    transformed.expected_date = transformed.expectedDate;
+    delete transformed.expectedDate;
+  }
+  
+  if ('completedDate' in transformed) {
+    transformed.completed_date = transformed.completedDate;
+    delete transformed.completedDate;
+  }
+  
+  return transformed;
+}
+
 // Direct Supabase storage operations for frontend
 export class SupabaseStorage {
   // Project methods
@@ -47,8 +88,9 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    const transformedProject = transformProjectForDatabase(insertProject);
     const projectData = {
-      ...insertProject,
+      ...transformedProject,
       user_id: user.id,
     };
 
@@ -73,9 +115,11 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    const transformedData = transformProjectForDatabase(updateData);
+
     const { data, error } = await supabase
       .from('projects')
-      .update(updateData)
+      .update(transformedData)
       .eq('user_id', user.id)
       .select()
       .single();
@@ -252,13 +296,12 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    const transformedMilestone = transformMilestoneForDatabase(insertMilestone);
     const milestoneData = {
-      ...insertMilestone,
+      ...transformedMilestone,
       user_id: user.id,
-      status: insertMilestone.status || "pending",
-      expected_date: insertMilestone.expectedDate || null,
-      completed_date: insertMilestone.completedDate || null,
-      order: insertMilestone.order || 0
+      status: transformedMilestone.status || "pending",
+      order: transformedMilestone.order || 0
     };
 
     const { data, error } = await supabase
@@ -280,9 +323,11 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    const transformedData = transformMilestoneForDatabase(updateData);
+
     const { data, error } = await supabase
       .from('milestones')
-      .update(updateData)
+      .update(transformedData)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
