@@ -42,7 +42,10 @@ export function TopBar({ title, description }: TopBarProps) {
           title: "Success",
           description: "Logged out successfully",
         });
-        // The page will automatically redirect to landing due to auth state change
+        // Force a page reload to ensure the auth state is properly cleared
+        // This will trigger the useAuth hook to detect the user is logged out
+        // and show the landing/login page
+        window.location.reload();
       }
     } catch (error) {
       toast({
