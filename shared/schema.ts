@@ -1,0 +1,103 @@
+import { pgTable, text, serial, integer, decimal, timestamp, boolean, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  category: text("category").notNull(),
+  vendor: text("vendor").notNull(),
+  description: text("description").notNull(),
+  date: text("date").notNull(),
+});
+
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  tags: text("tags").array().notNull().default([]),
+  type: text("type").notNull().default("text"), // text, checklist, link
+  completed: boolean("completed").default(false),
+});
+
+export const milestones = pgTable("milestones", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("pending"), // pending, in-progress, completed
+  expectedDate: text("expected_date"),
+  completedDate: text("completed_date"),
+  order: integer("order").notNull().default(0),
+});
+
+// Session storage table.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table.
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const project = pgTable("project", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  location: text("location").notNull(),
+  description: text("description"),
+  budget: decimal("budget", { precision: 10, scale: 2 }).notNull(),
+  startDate: text("start_date").notNull(),
+  targetCompletionDate: text("target_completion_date"),
+  actualCompletionDate: text("actual_completion_date"),
+  status: text("status").notNull().default("planning"), // planning, in_progress, completed, on_hold
+});
+
+export const insertExpenseSchema = createInsertSchema(expenses).omit({
+  id: true,
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+});
+
+export const insertMilestoneSchema = createInsertSchema(milestones).omit({
+  id: true,
+});
+
+export const insertProjectSchema = createInsertSchema(project).omit({
+  id: true,
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type Expense = typeof expenses.$inferSelect;
+
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type Note = typeof notes.$inferSelect;
+
+export type InsertMilestone = z.infer<typeof insertMilestoneSchema>;
+export type Milestone = typeof milestones.$inferSelect;
+
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type Project = typeof project.$inferSelect;
