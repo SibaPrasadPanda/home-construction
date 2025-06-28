@@ -161,9 +161,13 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Get the user's project to associate the expense with it
+    const project = await this.getProject();
+    
     const expenseData = {
       ...insertExpense,
       user_id: user.id,
+      project_id: project?.id || null, // Associate with project if it exists
     };
 
     const { data, error } = await supabase
@@ -227,9 +231,13 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Get the user's project to associate the note with it
+    const project = await this.getProject();
+
     const noteData = {
       ...insertNote,
       user_id: user.id,
+      project_id: project?.id || null, // Associate with project if it exists
       tags: insertNote.tags || [],
       type: insertNote.type || "text",
       completed: insertNote.completed ?? false
@@ -296,10 +304,14 @@ export class SupabaseStorage {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    // Get the user's project to associate the milestone with it
+    const project = await this.getProject();
+
     const transformedMilestone = transformMilestoneForDatabase(insertMilestone);
     const milestoneData = {
       ...transformedMilestone,
       user_id: user.id,
+      project_id: project?.id || null, // Associate with project if it exists
       status: transformedMilestone.status || "pending",
       order: transformedMilestone.order || 0
     };
